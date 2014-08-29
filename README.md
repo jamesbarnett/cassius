@@ -13,7 +13,7 @@ monitored events are sent to the caller's pid
 {:open, foobar}               #  {event, file_path} 
 ```
 <br/>
-These are the events you can monitor specifically, `:all` monitors all events.
+These are the events you can monitor specifically (`:all` monitors all events)
 
 | event			                | defn.                         |
 |---------------------------|-------------------------------|
