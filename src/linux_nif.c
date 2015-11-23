@@ -122,7 +122,7 @@ static void* monitor(void *obj) {
 		enif_send(NULL, &(thread_ref->pid_), env, enif_make_atom(env, "watcher_not_started"));
 		enif_clear_env(env);
 	}
-	wd = inotify_add_watch(fd, (char*) &(thread_ref->dir_), string_to_mask((char*) &(thread_ref->mask_)));
+	wd = inotify_add_watch(fd, thread_ref->dir_, string_to_mask(thread_ref->mask_));
 	if (wd < 0) { 
 		enif_send(NULL, &(thread_ref->pid_), env, enif_make_atom(env, "not_found"));
 		enif_clear_env(env);
@@ -145,14 +145,18 @@ static ERL_NIF_TERM _watch_(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		dir = malloc(dir_bin.size + 1);
 		memcpy(dir, dir_bin.data, dir_bin.size);
 		dir[dir_bin.size] = '\0';
-		memcpy((char*) &(thread_ref->dir_), dir, dir_bin.size + 1);
+		thread_ref->dir_ = enif_alloc(dir_bin.size + 1);
+		strcpy(thread_ref->dir_, dir);
 	}
 	else
 		perror("directory string");
 	thread_ref->opts = enif_thread_opts_create("thr_opts");
-	enif_get_atom(env, argv[1], (char*) &(thread_ref->mask_), 20, ERL_NIF_LATIN1);
-    	enif_self(env, &(thread_ref->pid_));
-      	if (enif_thread_create("", &(thread_ref->thread_), monitor, thread_ref, thread_ref->opts) != 0)
+	unsigned len;
+	enif_get_atom_length(env, argv[1], &len, ERL_NIF_LATIN1);
+	thread_ref->mask_= enif_alloc(len);
+	enif_get_atom(env, argv[1], thread_ref->mask_, len, ERL_NIF_LATIN1);
+	enif_self(env, &(thread_ref->pid_));
+  	if (enif_thread_create("", &(thread_ref->thread_), monitor, thread_ref, thread_ref->opts) != 0)
 		return enif_make_badarg(env);
 	return enif_make_atom(env, "ok");
 }
